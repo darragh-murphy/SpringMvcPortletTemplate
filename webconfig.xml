@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc.xsd
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <context:property-placeholder location="classpath:database.properties"/>
+
+    <!--  Load time weaver -->
+    <context:load-time-weaver aspectj-weaving="on"/>
+
+    <!-- Spring config enabled -->
+    <context:spring-configured/>
+
+    <!-- Post-processors for all standard config annotations -->
+    <context:annotation-config/>
+
+    <!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources -->
+    <mvc:resources location="/, classpath:/META-INF/web-resources/" mapping="/resources/**"/>
+
+    <!-- Selects a static view for rendering without the need for an explicit controller -->
+    <mvc:view-controller path="/" view-name="index"/>
+    <mvc:view-controller path="/uncaughtexception"/>
+    <mvc:view-controller path="/dataAccessFailure"/>
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+
+        <property name="dataSource" ref="dataSource"/>
+        <property name="annotatedClasses">
+            <list>
+                <value>com.darraghmurphy.domain.User</value>
+                <value>com.darraghmurphy.domain.Group</value>
+                <value>com.darraghmurphy.domain.City</value>
+                <value>com.darraghmurphy.domain.Project</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="persistenceUnitManager" class="org.springframework.orm.jpa.persistenceunit.DefaultPersistenceUnitManager">
+        <property name="persistenceXmlLocations">
+            <list>
+                <value>classpath*:persistence.xml</value>
+            </list>
+        </property>
+        <property name="defaultDataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- Specify the vendor-specific JpaDialect implementation to associate with this EntityManagerFactory. -->
+    <!-- This will be exposed through the EntityManagerFactoryInfo interface, to be picked up as default dialect -->
+    <!-- by accessors that intend to use JpaDialect functionality. -->
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="persistenceXmlLocation" value="classpath:/persistence.xml"/>
+        <property name="persistenceUnitName" value="userPersistenceUnit"/>
+        <property name="dataSource" ref="dataSource"/>
+        <property name="jpaVendorAdapter" ref="jpaVendorAdapter"/>
+        <property name="jpaDialect" ref="jpaDialect"/>
+        <property name="jpaPropertyMap" ref="jpaPropertyMap"/>
+    </bean>
+
+    <util:map id="jpaPropertyMap">
+        <entry key="show_sql" value="false"/>
+        <entry key="dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
+
+        <!-- TODO Enable this if you want to ensure the hibernate mapping matches the tables.
+        <entry key="hibernate.hbm2ddl.auto" value="validate"/> -->
+
+        <!-- TODO - Enable on Websphere 8 only as it will consume more memory. -->
+        <!--
+        <entry key="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory"/>
+        <entry key="hibernate.cache.provider_class" value="org.hibernate.cache.EhCacheProvider"/>
+        <entry key="hibernate.cache.use_second_level_cache" value="true"/>
+        <entry key="hibernate.cache.use_query_cache" value="false"/>
+        -->
+
+        <entry key="hibernate.transaction.factory_class" value="org.hibernate.transaction.CMTTransactionFactory"/>
+        <!--
+        <entry key="hibernate.transaction.factory_class" value="org.hibernate.ejb.transaction.JoinableCMTTransactionFactory"/>
+         -->
+        <entry key="hibernate.transaction.manager_lookup_class" value="org.hibernate.transaction.WebSphereExtendedJTATransactionLookup"/>
+
+        <entry key="hibernate.current_session_context_class" value="jta"/>
+        <entry key="hibernate.transaction.flush_before_completion" value="true"/>
+        <entry key="hibernate.show_sql" value="false"/>
+        <entry key="hibernate.format_sql" value="false"/>
+        <entry key="hibernate.generate_statistics" value="false"/>
+    </util:map>
+
+    <bean id="jpaVendorAdapter" class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+        <property name="database" value="ORACLE"/>
+        <property name="showSql" value="false"/>
+        <property name="generateDdl" value="false"/>
+    </bean>
+
+    <bean id="jpaDialect" class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"/>
+
+    <!-- Enable Java Transaction API (JTA) -->
+    <bean id="transactionManager" class="org.springframework.transaction.jta.WebSphereUowTransactionManager"/>
+
+    <!-- Turn on annotation driven features of spring -->
+    <mvc:annotation-driven/>
+
+    <tx:annotation-driven transaction-manager="transactionManager" mode="aspectj"/>
+
+    <bean class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" id="dataSource">
+        <property name="driverClassName" value="${database.driverClassName}"/>
+        <property name="url" value="${database.url}"/>
+        <property name="username" value="${database.username}"/>
+        <property name="password" value="${database.password}"/>
+        <property name="testOnBorrow" value="true"/>
+        <property name="testOnReturn" value="true"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="timeBetweenEvictionRunsMillis" value="1800000"/>
+        <property name="numTestsPerEvictionRun" value="3"/>
+        <property name="minEvictableIdleTimeMillis" value="1800000"/>
+        <property name="validationQuery" value="SELECT 1 FROM DUAL"/>
+    </bean>
+
+    <!-- Turn on EntityManager injection in the Spring XML configuration -->
+    <bean class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor"/>
+
+    <bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
+
+    <!-- This bean resolves specific types of exceptions to corresponding logical - view names for error views. -->
+    <!-- The default behaviour of DispatcherServletis to propagate all exceptions to the servlet container: this will happen
+            - here with all other types of exceptions. -->
+    <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver" p:defaultErrorView="uncaughtexception">
+        <property name="warnLogCategory" value="apperror"/>
+        <property name="exceptionMappings">
+            <props>
+                <prop key=".DataAccessException">dataAccessFailure</prop>
+                <prop key=".NoSuchRequestHandlingMethodException">resourceNotFound</prop>
+                <prop key=".TypeMismatchException">resourceNotFound</prop>
+                <prop key=".MissingServletRequestParameterException">resourceNotFound</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!-- Tiles resolver -->
+    <bean id="tilesViewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+        <property name="order" value="0"/>
+        <property name="viewClass" value="org.springframework.web.servlet.view.tiles3.TilesView"/>
+    </bean>
+
+    <bean id="tilesConfigurer" class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+        <property name="definitions">
+            <list>
+                <value>/WEB-INF/layouts/layouts.xml</value>
+                <value>/WEB-INF/views/**/views.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- When chaining ViewResolvers, an InternalResourceViewResolver always needs to be last, as it will attempt to resolve
+            any view name, no matter whether the underlying resource actually exists. -->
+    <bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- Note the resolution order -->
+        <property name="order" value="2"/>
+        <!-- Enable cache after development has been completed. -->
+        <property name="cache" value="false"/>
+
+        <property name="viewClass">
+            <value>org.springframework.web.servlet.view.JstlView</value>
+        </property>
+
+        <property name="prefix">
+            <value>/WEB-INF/views/</value>
+        </property>
+        <property name="suffix">
+            <value>.jspx</value>
+        </property>
+    </bean>
+
+    <!-- Store preferred language configuration in a cookie -->
+    <bean class="org.springframework.web.servlet.i18n.CookieLocaleResolver" id="localeResolver" p:cookieName="locale"/>
+
+    <!-- Store preferred theme configuration in a cookie -->
+    <bean class="org.springframework.web.servlet.theme.CookieThemeResolver" id="themeResolver" p:cookieName="theme">
+        <property name="defaultThemeName" value="default"/>
+    </bean>
+
+    <!-- Resolves localized messages*.properties and application.properties files in the application for internationalization. -->
+    <bean class="org.springframework.context.support.ReloadableResourceBundleMessageSource" id="messageSource">
+        <property name="basenames">
+            <list>
+                <value>/WEB-INF/i18n/application</value>
+                <value>/WEB-INF/i18n/messages</value>
+            </list>
+        </property>
+        <property name="fallbackToSystemLocale" value="true"/>
+        <property name="defaultEncoding" value="UTF-8"/>
+        <property name="cacheSeconds" value="3000"/>
+    </bean>
+
+    <!-- Resolves localized <theme_name>.properties files in the classpath to allow for theme support -->
+    <bean class="org.springframework.ui.context.support.ResourceBundleThemeSource" id="themeSource"/>
+
+    <!-- Spring MVC uses the ConversionService when it needs to convert between two objects types e.g. Date and String. To become
+            more familiar with its features we recommend that you review the (brief) sections on "Type Conversion" and "Field Formatting"
+            in the Spring Framework documentation. -->
+    <bean class="com.darraghmurphy.mdsi.web.ApplicationConversionServiceFactoryBean" id="conversionService"/>
+
+    <bean class="org.springframework.beans.SimpleTypeConverter" id="simpleTypeConverter">
+        <property name="conversionService" ref="conversionService"/>
+    </bean>
+
+    <bean class="org.springframework.beans.PropertyEditorRegistrySupport" id="propertyEditorRegistrySupport">
+        <property name="conversionService" ref="conversionService"/>
+    </bean>
+
+    <bean class="org.springframework.format.support.DefaultFormattingConversionService" id="defaultFormattingConversionService"/>
+
+    <bean class="org.springframework.web.accept.ContentNegotiationManager" id="contentNegotiationManager"/>
+
+    <bean class="org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter" id="httpRequestHandlerAdapter"/>
+
+    <bean class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean" id="localValidatorFactoryBean"/>
+
+    <bean class="org.springframework.scheduling.annotation.AsyncAnnotationBeanPostProcessor" id="asyncAnnotationBeanPostProcessor"/>
+
+    <bean class="org.springframework.web.bind.support.ConfigurableWebBindingInitializer" id="webBindingInitializer">
+        <property name="conversionService" ref="conversionService"/>
+        <property name="validator" ref="localValidatorFactoryBean"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.handler.ConversionServiceExposingInterceptor" id="conversionServiceExposingInterceptor">
+        <constructor-arg ref="conversionService"/>
+    </bean>
+
+    <bean class="org.springframework.web.portlet.mvc.annotation.DefaultAnnotationHandlerMapping" id="handlerMapping"/>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" id="requestMappingHandlerMapping">
+        <property name="order" value="0"/>
+        <property name="contentNegotiationManager" ref="contentNegotiationManager"/>
+        <property name="interceptors">
+            <list>
+                <ref bean="conversionServiceExposingInterceptor"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter" id="requestMappingHandlerAdapter">
+        <property name="contentNegotiationManager" ref="contentNegotiationManager"/>
+        <property name="webBindingInitializer" ref="webBindingInitializer"/>
+        <property name="messageConverters">
+            <list>
+                <bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+                <bean class="org.springframework.http.converter.ResourceHttpMessageConverter"/>
+                <bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+                <bean class="org.springframework.http.converter.xml.SourceHttpMessageConverter"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver" id="exceptionHandlerExceptionResolver">
+        <property name="contentNegotiationManager" ref="contentNegotiationManager"/>
+        <property name="order" value="1"/>
+        <property name="messageConverters">
+            <list>
+                <bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+                <bean class="org.springframework.http.converter.ResourceHttpMessageConverter"/>
+                <bean class="org.springframework.http.converter.StringHttpMessageConverter"/>
+                <bean class="org.springframework.http.converter.xml.SourceHttpMessageConverter"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver" id="responseStatusExceptionResolver">
+        <property name="order" value="2"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" id="defaultHandlerExceptionResolver">
+        <property name="order" value="3"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver" p:defaultErrorView="uncaughtexception">
+        <property name="exceptionMappings">
+            <props>
+                <prop key=".DataAccessException">dataAccessFailure</prop>
+            </props>
+        </property>
+    </bean>
+
+</beans>

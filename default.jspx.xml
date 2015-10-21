@@ -1,0 +1,97 @@
+<jsp:root xmlns:portlet="http://java.sun.com/portlet"
+          xmlns:portlet-client-model="http://www.ibm.com/xmlns/prod/websphere/portal/v8.1/portlet-client-model"
+          xmlns:jsp="http://java.sun.com/JSP/Page"
+          xmlns:c="http://java.sun.com/jsp/jstl/core" xmlns:tiles="http://tiles.apache.org/tags-tiles"
+          xmlns:spring="http://www.springframework.org/tags"
+          xmlns:wps="urn:jsptagdir:/WEB-INF/tld/engine.tld" version="2.0">
+    <html>
+
+        <jsp:output doctype-root-element="HTML" doctype-system="-//W3C//DTD HTML 4.01//EN"
+                    doctype-public="http://www.w3.org/TR/html4/strict.dtd"/>
+
+        <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+
+        <meta http-equiv="content-type" content="text/html; charset=windows-1250"/>
+        <meta http-equiv="x-ua-compatible" content="IE=8"/>
+
+        <title>META Tag test</title>
+
+        <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+        <jsp:directive.page pageEncoding="UTF-8"/>
+
+        <portlet-client-model:init>
+            <portlet-client-model:require module="ibm.portal.xml.*"/>
+            <portlet-client-model:require module="ibm.portal.portlet.*"/>
+        </portlet-client-model:init>
+
+        <portlet:defineObjects/>
+
+        <wps:constants/>
+
+        <head>
+
+            <!--  Load DOJO config -->
+            <c:set var="userLocalLowerCase" value="${fn:toLowerCase(userLocale)}"/>
+
+            <!--  Load dijit theme -->
+            <spring:url value="/resources/dijit/themes/claro/claro.css" var="theme_url"/>
+            <link rel="stylesheet" type="text/css" href="${theme_url}">
+                <!-- required for FF3 and Opera -->
+            </link>
+
+            <!--  Load DIJIT stylesheet -->
+            <spring:url value="/resources/dijit/themes/dijit.css" var="dijit_css_url"/>
+            <link rel="stylesheet" type="text/css" href="${dijit_css_url}">
+                <!-- required for FF3 and Opera -->
+                <jsp:text></jsp:text>
+            </link>
+
+            <!--  Load CUSTOM stylesheet -->
+            <spring:url value="/resources/styles/standard.css" var="custom_css_url"/>
+            <link rel="stylesheet" type="text/css" href="${custom_css_url}">
+                <!-- required for FF3 and Opera -->
+                <jsp:text></jsp:text>
+            </link>
+
+            <!--  Load DOJO Javascript toolkit -->
+            <spring:url value="/resources/dojo/dojo.js" var="dojo_url"/>
+            <script type="text/javascript" src="${dojo_url}"><!-- required for FF3 and Opera -->
+                <jsp:text></jsp:text>
+            </script>
+
+            <!--  Load SPRING javascript toolkits -->
+            <spring:url value="/resources/spring/Spring.js" var="spring_url"/>
+            <script src="${spring_url}" type="text/javascript"><!-- /required for FF3 and Opera -->
+                <jsp:text></jsp:text>
+            </script>
+
+            <!--  Load SPRING DOJO javascript toolkits -->
+            <spring:url value="/resources/spring/Spring-Dojo.js" var="spring_dojo_url"/>
+            <script src="${spring_dojo_url}" type="text/javascript"><!-- required for FF3 and Opera -->
+                <jsp:text></jsp:text>
+            </script>
+
+            <!--  Initialise DOJO -->
+            <script language="JavaScript" type="text/javascript">
+                dojo.require("dojo.parser");<!-- required for FF3 and Opera -->
+                <jsp:text></jsp:text>
+            </script>
+
+            <!--  Application details -->
+            <spring:message code="application_name" var="app_name"/>
+            <title>
+                <spring:message code="welcome_h3" arguments="${app_name}"/>
+            </title>
+
+        </head>
+
+        <body class="claro">
+            <div id="wrapper">
+                <div id="main" class="CUSTOM">
+                    <tiles:insertAttribute name="body"/>
+                </div>
+            </div>
+        </body>
+
+    </html>
+</jsp:root>

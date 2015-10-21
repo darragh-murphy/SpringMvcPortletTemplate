@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<persistence xmlns="http:/.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             version="2.0" xsi:schemaLocation="http:/.sun.com/xml/ns/persistence http:/.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+
+    <!-- PLEASE NOTE -->
+    <!-- The Java Transaction API (JTA), one of the Java Enterprise Edition (Java EE) APIs -->
+    <!-- enables distributed transactions to be done across multiple X/Open XA resources in a Java environment. -->
+    <!-- JTA is a specification developed under the Java Community Process as JSR 907. JTA provides for: -->
+    <!-- demarcation [clarification needed] of transaction boundaries -->
+    <!-- X/Open XA API allowing resources to participate in transactions. -->
+
+    <!-- JTA transaction manager is general purpose transaction manager and can enlist other resources such as JMS queues in
+            transaction. Typically Java EE containers employ a JTA transaction manager for EJBs, JPA entities, etc. -->
+    <persistence-unit name="userPersistenceUnit" transaction-type="RESOURCE_LOCAL">
+
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+
+        <class>com.darraghmurphy.domain.User</class>
+        <class>com.darraghmurphy.domain.Group</class>
+        <class>com.darraghmurphy.domain.City</class>
+        <class>com.darraghmurphy.domain.Project</class>
+
+        <validation-mode>NONE</validation-mode>
+
+        <properties>
+            <!-- WAS, unlike every other app server on the planet, does not allow direct access to the JTS TransactionManager. -->
+            <!-- Instead, for common transaction-related tasks users must utilize a proprietary API known as ExtendedJTATransaction. -->
+            <property name="hibernate.transaction.jta.platform" value="org.hibernate.service.jta.platform.internal.WebSphereExtendedJtaPlatform"/>
+
+            <property name="hibernate.connection.autocommit" value="false"/>
+
+            <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
+            <property name="hibernate.show_sql" value="false"/>
+
+            <!-- Turn off Hibernate bean validation with JPA 1.0 -->
+            <property name="hibernate.validator.apply_to_ddl" value="false"/>
+            <property name="hibernate.validator.autoregister_listeners" value="false"/>
+
+            <property name="hibernate.transaction.flush_before_completion" value="true"/>
+            <property name="hibernate.transaction.auto_close_session" value="true"/>
+
+        </properties>
+
+    </persistence-unit>
+
+</persistence>
